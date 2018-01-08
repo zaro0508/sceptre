@@ -72,7 +72,15 @@ class StackOutputBase(Resolver):
             else:
                 raise e
         else:
-            outputs = response["Stacks"][0]["Outputs"]
+            stack = response["Stacks"][0]
+            try:
+                outputs = stack["Outputs"]
+            except KeyError:
+                raise DependencyStackMissingOutputError(
+                    "The stack '{0}' does not have any outputs".format(
+                        stack_name
+                    )
+                )
 
         self.logger.debug("Outputs: {0}".format(outputs))
 

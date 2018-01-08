@@ -185,6 +185,14 @@ class TestStackOutputBaseResolver(object):
                 sentinel.stack_name
             )
 
+    def test_get_stack_outputs_with_stack_without_outputs(self):
+        self.stack.connection_manager.call.return_value = {"Stacks": [{}]}
+
+        with pytest.raises(DependencyStackMissingOutputError):
+            self.base_stack_output_resolver._get_stack_outputs(
+                sentinel.stack_name
+            )
+
     def test_get_stack_outputs_with_unkown_boto_error(self):
         self.stack.connection_manager.call.side_effect = ClientError(
             {
