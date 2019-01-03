@@ -397,8 +397,9 @@ def create_change_set(ctx, environment, stack, change_set_name):
     CHANGE_SET_NAME.
     """
     env = get_env(ctx.obj["sceptre_dir"], environment, ctx.obj["options"])
-    env.stacks[stack].create_change_set(change_set_name)
-
+    response = env.stacks[stack].create_change_set(change_set_name)
+    if response != StackStatus.COMPLETE:
+        exit(1)
 
 @cli.command(name="delete-change-set")
 @change_set_options
@@ -521,10 +522,9 @@ def update_with_change_set(ctx, environment, stack, verbose):
         if not verbose:
             description = _simplify_change_set_description(description)
         write(description, ctx.obj["output_format"])
-        if status != StackChangeSetStatus.READY:
-            exit(1)
-        if click.confirm("Proceed with stack update?"):
-            env.stacks[stack].execute_change_set(change_set_name)
+        if status == StackChangeSetStatus.READY:
+            if click.confirm("Proceed with stack update?"):
+                env.stacks[stack].execute_change_set(change_set_name)
 
 
 @contextlib.contextmanager
@@ -537,11 +537,14 @@ def change_set(stack, name):
     :param name: The name of the change set.
     :type name: str
     """
-    stack.create_change_set(name)
+
+    response = stack.create_change_set(name)
     try:
         yield
     finally:
         stack.delete_change_set(name)
+
+    return response
 
 
 @cli.command(name="describe-stack-outputs")

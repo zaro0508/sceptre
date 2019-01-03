@@ -241,14 +241,18 @@ class Stack(object):
         }
         update_stack_kwargs.update(self._get_template_details())
         update_stack_kwargs.update(self._get_role_arn())
-        response = self.connection_manager.call(
-            service="cloudformation",
-            command="update_stack",
-            kwargs=update_stack_kwargs
-        )
-        self.logger.debug(
-            "%s - Update stack response: %s", self.name, response
-        )
+        try:
+            response = self.connection_manager.call(
+                service="cloudformation",
+                command="update_stack",
+                kwargs=update_stack_kwargs
+            )
+            self.logger.debug(
+                "%s - Update stack response: %s", self.name, response
+            )
+        except botocore.exceptions.ClientError as exp:
+            if exp.response["Error"]["Message"] == "No updates are to be performed.":
+                self.logger.info("%s - No updates to perform.", self.name)
 
         status = self._wait_for_completion()
 
@@ -548,6 +552,17 @@ class Stack(object):
             "%s - Successfully initiated creation of change set '%s'",
             self.name, change_set_name
         )
+        change_set = self.list_change_sets()["Summaries"][-1]
+        if ("FAILED" in change_set["Status"] and "didn't contain changes" in change_set["StatusReason"]):
+            self.logger.info("%s - No updates to perform.", self.name)
+            response = StackStatus.COMPLETE
+        elif ("FAILED" in change_set["Status"]):
+            self.logger.info("%s - Failed to update.", self.name)
+            response = StackStatus.FAILED
+        else:
+            response = StackStatus.COMPLETE
+
+        return response
 
     def delete_change_set(self, change_set_name):
         """
@@ -559,7 +574,7 @@ class Stack(object):
         self.logger.debug(
             "%s - Deleting change set '%s'", self.name, change_set_name
         )
-        self.connection_manager.call(
+        response = self.connection_manager.call(
             service="cloudformation",
             command="delete_change_set",
             kwargs={
@@ -567,6 +582,7 @@ class Stack(object):
                 "StackName": self.external_name
             }
         )
+
         # If the call successfully completes, AWS CloudFormation
         # successfully deleted the change set.
         self.logger.info(

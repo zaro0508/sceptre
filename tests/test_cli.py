@@ -524,7 +524,7 @@ class TestCli(object):
             .assert_called_with("change-set-1")
         mock_get_env.return_value.stacks["vpc"].wait_for_cs_completion\
             .assert_called_with("change-set-1")
-        assert result.exit_code == 1
+        assert result.exit_code == 0
 
     @patch("sceptre.cli.os.getcwd")
     @patch("sceptre.cli.get_env")
