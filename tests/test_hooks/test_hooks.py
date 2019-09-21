@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
-from mock import MagicMock
+
+import pytest
+import yaml
+
+from mock import sentinel, MagicMock
 
 from sceptre.hooks import Hook, HookProperty, add_stack_hooks, execute_hooks
 
@@ -67,6 +71,73 @@ class TestHook(object):
     def test_hook_inheritance(self):
         assert isinstance(self.hook, Hook)
 
+    def test_init(self):
+        self.mock_hook = MockHook(
+            argument=sentinel.argument,
+            stack=sentinel.stack
+        )
+        assert self.mock_hook.stack == sentinel.stack
+        assert self.mock_hook.argument == sentinel.argument
+
+    def test_init_with_json(self):
+        input = {
+           "name": "rainbows",
+           "region": "west",
+           "colors": [
+              "yellow",
+              "green",
+              "red"
+           ]
+        }
+        self.mock_hook = MockHook(
+            argument=input,
+            stack=sentinel.stack
+        )
+        assert self.mock_hook.stack == sentinel.stack
+        assert self.mock_hook.argument == {
+           "name": "rainbows",
+           "region": "west",
+           "colors": [
+              "yellow",
+              "green",
+              "red"
+           ]
+        }
+
+    def test_init_with_valid_yaml(self):
+        input = """\
+        name: "rainbows"
+        region: "west"
+        colors:
+          - "yellow"
+          - "green"
+          - "red"
+        """
+        self.mock_hook = MockHook(
+            argument=input,
+            stack=sentinel.stack
+        )
+        assert self.mock_hook.stack == sentinel.stack
+        assert self.mock_hook.argument == {
+           "name": "rainbows",
+           "region": "west",
+           "colors": [
+              "yellow",
+              "green",
+              "red"
+           ]
+        }
+
+    def test_init_with_invalid_yaml(self):
+        input = """\
+        name: "rainbows"
+          region: "west"
+        """
+        with pytest.raises(yaml.YAMLError):
+            self.mock_hook = MockHook(
+                argument=input,
+                stack=sentinel.stack
+            )
 
 class MockClass(object):
     hook_property = HookProperty("hook_property")

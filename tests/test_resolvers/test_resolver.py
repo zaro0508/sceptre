@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import pytest
+import yaml
+
 from mock import sentinel, MagicMock
 
 from sceptre.resolvers import Resolver, ResolvableProperty
@@ -23,16 +26,73 @@ class MockClass(object):
 
 class TestResolver(object):
 
-    def setup_method(self, test_method):
+    def test_init(self):
         self.mock_resolver = MockResolver(
             argument=sentinel.argument,
             stack=sentinel.stack
         )
-
-    def test_init(self):
         assert self.mock_resolver.stack == sentinel.stack
         assert self.mock_resolver.argument == sentinel.argument
 
+    def test_init_with_json(self):
+        input = {
+           "name": "rainbows",
+           "region": "west",
+           "colors": [
+              "yellow",
+              "green",
+              "red"
+           ]
+        }
+        self.mock_resolver = MockResolver(
+            argument=input,
+            stack=sentinel.stack
+        )
+        assert self.mock_resolver.stack == sentinel.stack
+        assert self.mock_resolver.argument == {
+           "name": "rainbows",
+           "region": "west",
+           "colors": [
+              "yellow",
+              "green",
+              "red"
+           ]
+        }
+
+    def test_init_with_valid_yaml(self):
+        input = """\
+        name: "rainbows"
+        region: "west"
+        colors:
+          - "yellow"
+          - "green"
+          - "red"
+        """
+        self.mock_resolver = MockResolver(
+            argument=input,
+            stack=sentinel.stack
+        )
+        assert self.mock_resolver.stack == sentinel.stack
+        assert self.mock_resolver.argument == {
+           "name": "rainbows",
+           "region": "west",
+           "colors": [
+              "yellow",
+              "green",
+              "red"
+           ]
+        }
+
+    def test_init_with_invalid_yaml(self):
+        input = """\
+        name: "rainbows"
+          region: "west"
+        """
+        with pytest.raises(yaml.YAMLError):
+            self.mock_resolver = MockResolver(
+                argument=input,
+                stack=sentinel.stack
+            )
 
 class TestResolvablePropertyDescriptor(object):
 
