@@ -3,6 +3,7 @@ import abc
 import logging
 from contextlib import contextmanager
 from threading import RLock
+import yaml
 
 import six
 from sceptre.helpers import _call_func_on_values
@@ -29,6 +30,12 @@ class Resolver:
     def __init__(self, argument=None, stack=None):
         self.logger = logging.getLogger(__name__)
         self.argument = argument
+        if isinstance(argument, six.string_types):
+            try:
+                self.argument = yaml.safe_load(argument)
+            except yaml.YAMLError as e:
+                self.logger.error(e)
+                raise e
         self.stack = stack
 
     def setup(self):
