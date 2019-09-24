@@ -2,6 +2,8 @@ import abc
 import logging
 from functools import wraps
 
+from ..resolvers import ResolvableProperty
+
 from sceptre.helpers import _call_func_on_values
 
 
@@ -15,6 +17,8 @@ class Hook(object):
     :type stack: sceptre.stack.Stack
     """
     __metaclass__ = abc.ABCMeta
+    argument = ResolvableProperty("argument")
+    config = {}
 
     def __init__(self, argument=None, stack=None):
         self.logger = logging.getLogger(__name__)

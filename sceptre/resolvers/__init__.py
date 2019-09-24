@@ -12,44 +12,6 @@ class RecursiveGet(Exception):
     pass
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Resolver:
-    """
-    Resolver is an abstract base class that should be inherited by all
-    Resolvers.
-
-    :param argument: The argument of the resolver.
-    :type argument: str
-    :param stack: The associated stack of the resolver.
-    :type stack: sceptre.stack.Stack
-    """
-
-    __metaclass__ = abc.ABCMeta
-
-    def __init__(self, argument=None, stack=None):
-        self.logger = logging.getLogger(__name__)
-        self.argument = argument
-        self.stack = stack
-
-    def setup(self):
-        """
-        This method is called at during stack initialisation.
-        Implementation of this method in subclasses can be used to do any
-        initial setup of the object.
-        """
-        pass  # pragma: no cover
-
-    @abc.abstractmethod
-    def resolve(self):
-        """
-        An abstract method which must be overwritten by all inheriting classes.
-        This method is called to retrieve the final desired value.
-        Implementation of this method in subclasses must return a suitable
-        object or primitive type.
-        """
-        pass  # pragma: no cover
-
-
 class ResolvableProperty(object):
     """
     This is a descriptor class used to store an attribute that may contain
@@ -125,3 +87,42 @@ class ResolvableProperty(object):
             yield
         finally:
             self._get_in_progress = False
+
+@six.add_metaclass(abc.ABCMeta)
+class Resolver:
+    """
+    Resolver is an abstract base class that should be inherited by all
+    Resolvers.
+
+    :param argument: The argument of the resolver.
+    :type argument: str
+    :param stack: The associated stack of the resolver.
+    :type stack: sceptre.stack.Stack
+    """
+
+    __metaclass__ = abc.ABCMeta
+    argument = ResolvableProperty("argument")
+    config = {}
+
+    def __init__(self, argument=None, stack=None):
+        self.logger = logging.getLogger(__name__)
+        self.argument = argument
+        self.stack = stack
+
+    def setup(self):
+        """
+        This method is called at during stack initialisation.
+        Implementation of this method in subclasses can be used to do any
+        initial setup of the object.
+        """
+        pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def resolve(self):
+        """
+        An abstract method which must be overwritten by all inheriting classes.
+        This method is called to retrieve the final desired value.
+        Implementation of this method in subclasses must return a suitable
+        object or primitive type.
+        """
+        pass  # pragma: no cover
